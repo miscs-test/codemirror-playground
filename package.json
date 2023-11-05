@@ -8,6 +8,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.10.2",
+    "@codemirror/lang-javascript": "^6.2.1",
+    "@codemirror/lang-sql": "^6.5.4",
+    "@codemirror/state": "^6.3.1",
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "@codemirror/view": "^6.21.4",
+    "@lezer/highlight": "^1.1.6",
+    "@uiw/codemirror-theme-okaidia": "^4.21.20",
+    "@uiw/codemirror-themes": "^4.21.20",
+    "@uiw/react-codemirror": "^4.21.20",
+    "codemirror": "^6.0.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "sql-formatter": "^4.0.2",
