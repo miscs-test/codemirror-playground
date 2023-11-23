@@ -49,6 +49,8 @@ const CodeMirror: React.FC = () => {
 
   useLayoutEffect(() => {
   // useEffect(() => {
+    console.log('activeFile changes in useLayoutEffect', activeFile)
+
     if (!editorRef.current) {
       return;
     }
@@ -60,6 +62,10 @@ const CodeMirror: React.FC = () => {
       editorRef.current?.removeChild(editor.dom);
     };
   }, [activeFile]);
+
+  useEffect(() => {
+    console.log('activeFile changes in useEffect', activeFile)
+  }, [activeFile])
 
   return (
     <div>
