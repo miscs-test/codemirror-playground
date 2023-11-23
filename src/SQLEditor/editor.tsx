@@ -80,9 +80,9 @@ const SQLEditor: React.FC = () => {
         helpPanel(),
         docSizePlugin,
         // myTheme,
-        curSQLGutter,
+        // curSQLGutter,
         // breakpointGutter,
-        // breakpointGutter2,
+        breakpointGutter2,
       ],
     });
 
