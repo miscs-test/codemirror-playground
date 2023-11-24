@@ -1,4 +1,10 @@
-import { EditorView, gutter, GutterMarker, ViewUpdate } from '@codemirror/view';
+import {
+  EditorView,
+  gutter,
+  GutterMarker,
+  ViewPlugin,
+  ViewUpdate,
+} from '@codemirror/view';
 import { StateField, StateEffect, RangeSet } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 
@@ -98,8 +104,41 @@ const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
     });
 
   // console.log({ effectPayload });
+  console.log('curSQL:', '\n' + effectPayload.SQLs.join('\n'));
   v.view.dispatch({ effects: markSQL.of(effectPayload) });
 });
+
+const curSQLView = ViewPlugin.fromClass(
+  class {
+    private dom: HTMLElement;
+
+    constructor(view: EditorView) {
+      this.dom = view.dom.appendChild(document.createElement('div'));
+      this.dom.style.cssText =
+        'position: absolute; inset-block-start: 2px; inset-inline-end: 5px';
+      // this.dom.textContent = view.state.doc.length + '';
+      this.dom.textContent = view.state
+        .field(sqlField)
+        .SQLs.join(' | ')
+        .slice(0, 200);
+    }
+
+    update(update: ViewUpdate) {
+      this.dom.textContent = update.state
+        .field(sqlField)
+        .SQLs.join(' | ')
+        .slice(0, 200);
+      // if (update.selectionSet) {
+      // }
+      // if (update.docChanged)
+      //   this.dom.textContent = update.state.doc.length + '';
+    }
+
+    destroy() {
+      this.dom.remove();
+    }
+  }
+);
 
 export const curSQLGutter = [
   sqlGutter,
@@ -110,4 +149,5 @@ export const curSQLGutter = [
       width: '4px',
     },
   }),
+  // curSQLView,
 ];
