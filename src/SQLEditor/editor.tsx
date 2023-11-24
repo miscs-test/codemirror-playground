@@ -22,16 +22,16 @@ import { breakpointGutter } from './extensions/breakpoints';
 import { breakpointGutter2 } from './extensions/highlight-cur-sql';
 
 // const DOC = Array(20).fill('select * from test;').join('\n');
-const SQL_DOC = `
-/* Enter "USE {database};" to start exploring your data.
-   Type "-- your question" followed by the "ENTER" key to try out AI-generated SQL queries.*/
-USE sp500insight;
-SELECT sector, industry, COUNT(*) AS companies
-FROM companies c
-WHERE c.stock_symbol IN (SELECT stock_symbol FROM index_compositions WHERE index_symbol = "SP500；")
-GROUP BY sector, industry。
-ORDER BY sector, companies DESC LIMIT 10;；，
-`;
+// const SQL_DOC = `
+// /* Enter "USE {database};" to start exploring your data.
+//    Type "-- your question" followed by the "ENTER" key to try out AI-generated SQL queries.*/
+// USE sp500insight;
+// SELECT sector, industry, COUNT(*) AS companies
+// FROM companies c
+// WHERE c.stock_symbol IN (SELECT stock_symbol FROM index_compositions WHERE index_symbol = "SP500；")
+// GROUP BY sector, industry。
+// ORDER BY sector, companies DESC LIMIT 10;；，
+// `;
 
 // const JS_DOC = `
 // /** complete tags here
@@ -39,10 +39,16 @@ ORDER BY sector, companies DESC LIMIT 10;；，
 //  */
 // `;
 
-const JS_DOC = `use test;
+const SQL_DOC = `
+/*
+this is a block comment
+*/
 
-select * from test.tt
-limit 100;
+use test;
+
+select * from test.tt /* this is a line comment */
+limit 100;  /* this is another line comment */
+
 `
 
 const SQLEditor: React.FC = () => {
@@ -52,7 +58,7 @@ const SQLEditor: React.FC = () => {
   useEffect(() => {
     const state = EditorState.create({
       // doc: SQL_DOC,
-      doc: JS_DOC,
+      doc: SQL_DOC,
       extensions: [
         basicSetup,
 
@@ -63,7 +69,7 @@ const SQLEditor: React.FC = () => {
         // jsExts,
 
         // zebraStripes({ step: 4 }),
-        EditorView.lineWrapping,
+        // EditorView.lineWrapping,
         toggleWith(
           'Mod-o',
           EditorView.editorAttributes.of({
@@ -80,9 +86,9 @@ const SQLEditor: React.FC = () => {
         helpPanel(),
         docSizePlugin,
         // myTheme,
-        // curSQLGutter,
+        curSQLGutter,
         // breakpointGutter,
-        breakpointGutter2,
+        // breakpointGutter2,
       ],
     });
 

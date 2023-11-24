@@ -30,6 +30,7 @@ import {
   EditorSelection,
   RangeSet,
 } from '@codemirror/state';
+import { syntaxTree } from '@codemirror/language';
 
 class SQLMarker extends GutterMarker {
   toDOM() {
@@ -95,9 +96,9 @@ const sqlGutter = gutter({
   initialSpacer: () => sqlMarker,
   // markers: (view) => view.state.field(breakpointState),
   lineMarker(view, line) {
-    console.log({ lineFrom: line.from, lineTo: line.to });
+    // console.log({ lineFrom: line.from, lineTo: line.to });
     let { from, to } = view.state.field(sqlField);
-    console.log({ from, to });
+    // console.log({ from, to });
     if (line.from >= from && line.to <= to + 1 && line.from !== line.to)
       return sqlMarker;
     return null;
@@ -108,22 +109,52 @@ const sqlGutter = gutter({
 const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
   if (!v.selectionSet) return;
   let { state } = v.view,
-    sel = state.selection.main,
-    doc = state.doc,
-    content = doc.toString();
+    sel = state.selection.main;
 
-  console.log({ sel });
-  console.log({ content });
+  console.log({ nodeSelFrom: sel.from, nodeSelTo: sel.to });
 
-  let sqlStart = content.lastIndexOf(';', sel.from) + 1;
-  let sqlEnd = content.indexOf(';', sel.to);
+  // step 0
+  // debounce
 
-  // let sqlStart = doc.lastIndexOf(';', sel.from) + 1;
-  // let sqlEnd = doc.indexOf(';', sel.to);
+  // step 1
+  // extend the selection, make the from start the line from, and to end the line to
+  const newFrom = state.doc.lineAt(sel.from).from;
+  const newTo = state.doc.lineAt(sel.to).to;
+  console.log({ newFrom, newTo });
 
-  if (sqlEnd < 0) sqlEnd = doc.length;
-  console.log({ sqlStart, sqlEnd });
-  v.view.dispatch({ effects: markSQL.of({ from: sqlStart, to: sqlEnd }) });
+  syntaxTree(state)
+    .cursor()
+    .iterate((node) => {
+      // console.log({
+      //   nodeName: node.name,
+      //   nodeFrom: node.from,
+      //   nodeTo: node.to,
+      //   content: state.sliceDoc(node.from, node.to),
+      // });
+      if (node.name === 'Script') {
+        return true;
+      }
+      if (node.name === 'Statement') {
+        if (node.to >= newFrom && node.from <= newTo) {
+          console.log('found it: ', state.sliceDoc(node.from, node.to));
+
+          // v.view.dispatch({ effects: markSQL.of({ from: node.from, to: node.to }) });
+          // return false;
+          // return false
+        }
+      }
+      return false;
+    });
+  // let tree = state.tree;
+  // for (let cursor = tree.cursor(sel.from); ; ) {
+  //   if (cursor.node.name === 'SQLStatement') {
+  //     let from = cursor.from,
+  //       to = cursor.to;
+  //     v.view.dispatch({ effects: markSQL.of({ from: from, to: to }) });
+  //     break;
+  //   }
+  //   if (!cursor.parent()) break;
+  // }
 });
 
 export const curSQLGutter = [
