@@ -49,7 +49,7 @@ use test;
 select * from test.tt /* this is a line comment */
 limit 100;  /* this is another line comment */
 
-`
+`;
 
 const SQLEditor: React.FC = () => {
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +69,7 @@ const SQLEditor: React.FC = () => {
         // jsExts,
 
         // zebraStripes({ step: 4 }),
-        // EditorView.lineWrapping,
+        EditorView.lineWrapping,
         toggleWith(
           'Mod-o',
           EditorView.editorAttributes.of({
@@ -82,7 +82,7 @@ const SQLEditor: React.FC = () => {
         placeholders,
         fullWidthLinter,
 
-        emptyLineGutter,
+        // emptyLineGutter,
         helpPanel(),
         docSizePlugin,
         // myTheme,

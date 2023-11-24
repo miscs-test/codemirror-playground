@@ -1,84 +1,33 @@
-// import { EditorView, gutter, GutterMarker } from '@codemirror/view';
-
-// const curSQLMarker = new (class extends GutterMarker {
-//   toDOM() {
-//     return document.createTextNode(' ');
-//   }
-// })();
-
-// export const curSQLGutter = [
-//   gutter({
-//     class: 'cm-cur-sql-gutter',
-//     initialSpacer: () => curSQLMarker,
-//     lineMarker(view, line, otherMarkers) {
-//       if (otherMarkers.some((m) => m == curSQLMarker)) return curSQLMarker;
-//       return null;
-//     },
-//   }),
-//   EditorView.baseTheme({
-//     '.cm-cur-sql-gutter .cm-gutterElement': {
-//       background: 'red',
-//       width: '2px',
-//     },
-//   }),
-// ];
 import { EditorView, gutter, GutterMarker, ViewUpdate } from '@codemirror/view';
-import {
-  StateField,
-  StateEffect,
-  StateEffectType,
-  EditorSelection,
-  RangeSet,
-} from '@codemirror/state';
+import { StateField, StateEffect, RangeSet } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 
 class SQLMarker extends GutterMarker {
   toDOM() {
-    return document.createTextNode('a');
+    const el = document.createElement('div');
+    el.style.background = 'red';
+    el.style.height = '100%';
+    return el;
   }
 }
 const sqlMarker = new SQLMarker();
 
-const markSQL = StateEffect.define<{ from: number; to: number }>({
+type MarkSQLPayload = {
+  from: number;
+  to: number;
+  SQLs: string[];
+};
+const markSQL = StateEffect.define<MarkSQLPayload>({
   map: (val, mapping) => ({
     from: mapping.mapPos(val.from),
     to: mapping.mapPos(val.to),
+    SQLs: val.SQLs,
   }),
 });
-// const breakpointEffect = StateEffect.define<{pos: number, on: boolean}>({
-//   map: (val, mapping) => ({pos: mapping.mapPos(val.pos), on: val.on})
-// })
 
-const breakpointState = StateField.define<RangeSet<GutterMarker>>({
+const sqlField = StateField.define<MarkSQLPayload>({
   create() {
-    return RangeSet.empty;
-  },
-  update(set, transaction) {
-    // set = set.map(transaction.changes);
-    // for (let e of transaction.effects) {
-    //   if (e.is(breakpointEffect)) {
-    //     if (e.value.on)
-    //       set = set.update({ add: [breakpointMarker.range(e.value.pos)] });
-    //     else set = set.update({ filter: (from) => from != e.value.pos });
-    //   }
-    // }
-    // let newSet = RangeSet.empty;
-    // for (let effect of transaction.effects) {
-    //   if (effect.is(markSQL)) {
-    //     newSet = newSet.update({
-    //       add: [sqlMarker.range(effect.value.from, effect.value.to)],
-    //     });
-    //   }
-    // }
-    // return newSet;
-    console.log({ set });
-    return set;
-  },
-});
-
-const sqlField = StateField.define({
-  create() {
-    return { from: 0, to: 0 };
+    return { from: -1, to: -1, SQLs: [] };
   },
   update(value, tr) {
     for (let effect of tr.effects) {
@@ -86,21 +35,14 @@ const sqlField = StateField.define({
     }
     return value;
   },
-  // provide: f => EditorView.decorations.from(f, ({from, to}) => {
-  //   return {widget: new SQLMarker(), range: from};
-  // })
 });
 
 const sqlGutter = gutter({
   class: 'cm-sql-gutter',
   initialSpacer: () => sqlMarker,
-  // markers: (view) => view.state.field(breakpointState),
   lineMarker(view, line) {
-    // console.log({ lineFrom: line.from, lineTo: line.to });
     let { from, to } = view.state.field(sqlField);
-    // console.log({ from, to });
-    if (line.from >= from && line.to <= to + 1 && line.from !== line.to)
-      return sqlMarker;
+    if (line.from >= from && line.from <= to) return sqlMarker;
     return null;
   },
   lineMarkerChange: () => true,
@@ -111,7 +53,7 @@ const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
   let { state } = v.view,
     sel = state.selection.main;
 
-  console.log({ nodeSelFrom: sel.from, nodeSelTo: sel.to });
+  // console.log({ nodeSelFrom: sel.from, nodeSelTo: sel.to });
 
   // step 0
   // debounce
@@ -120,7 +62,9 @@ const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
   // extend the selection, make the from start the line from, and to end the line to
   const newFrom = state.doc.lineAt(sel.from).from;
   const newTo = state.doc.lineAt(sel.to).to;
-  console.log({ newFrom, newTo });
+  // console.log({ newFrom, newTo });
+
+  const effectPayload: MarkSQLPayload = { from: -1, to: -1, SQLs: [] };
 
   syntaxTree(state)
     .cursor()
@@ -132,29 +76,29 @@ const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
       //   content: state.sliceDoc(node.from, node.to),
       // });
       if (node.name === 'Script') {
+        // root node
         return true;
       }
       if (node.name === 'Statement') {
         if (node.to >= newFrom && node.from <= newTo) {
-          console.log('found it: ', state.sliceDoc(node.from, node.to));
-
-          // v.view.dispatch({ effects: markSQL.of({ from: node.from, to: node.to }) });
-          // return false;
-          // return false
+          const content = state.sliceDoc(node.from, node.to);
+          // console.log('found it: ', content);
+          if (content !== ';') {
+            effectPayload.SQLs.push(content);
+            if (effectPayload.from === -1) {
+              effectPayload.from = node.from;
+            }
+            if (node.to > effectPayload.to) {
+              effectPayload.to = node.to;
+            }
+          }
         }
       }
       return false;
     });
-  // let tree = state.tree;
-  // for (let cursor = tree.cursor(sel.from); ; ) {
-  //   if (cursor.node.name === 'SQLStatement') {
-  //     let from = cursor.from,
-  //       to = cursor.to;
-  //     v.view.dispatch({ effects: markSQL.of({ from: from, to: to }) });
-  //     break;
-  //   }
-  //   if (!cursor.parent()) break;
-  // }
+
+  // console.log({ effectPayload });
+  v.view.dispatch({ effects: markSQL.of(effectPayload) });
 });
 
 export const curSQLGutter = [
@@ -163,8 +107,7 @@ export const curSQLGutter = [
   sqlHighlighter,
   EditorView.baseTheme({
     '.cm-sql-gutter .cm-gutterElement': {
-      // background: 'red',
-      width: '12px',
+      width: '4px',
     },
   }),
 ];
