@@ -7,6 +7,7 @@ import {
 } from '@codemirror/view';
 import { StateField, StateEffect, RangeSet } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
+// import _ from 'lodash';
 
 class SQLMarker extends GutterMarker {
   toDOM() {
@@ -37,7 +38,33 @@ const sqlField = StateField.define<MarkSQLPayload>({
   },
   update(value, tr) {
     for (let effect of tr.effects) {
-      if (effect.is(markSQL)) return effect.value;
+      if (effect.is(markSQL)) {
+        // console.log('sqlField update', effect.value);
+        return effect.value;
+      }
+    }
+    return value;
+  },
+});
+const curSQLLineField = StateField.define<RangeSet<SQLMarker>>({
+  create() {
+    return RangeSet.empty;
+  },
+  update(value, tr) {
+    for (let effect of tr.effects) {
+      if (effect.is(markSQL)) {
+        // console.log('curSQLLineField update', effect.value);
+        let v = RangeSet.empty;
+        if (effect.value.from !== -1) {
+          for (let i = effect.value.from; i <= effect.value.to; ) {
+            const line = tr.state.doc.lineAt(i);
+            v = v.update({ add: [sqlMarker.range(line.from)] });
+            i = line.to + 1;
+          }
+        }
+        // console.log({ vLen: v.size });
+        return v;
+      }
     }
     return value;
   },
@@ -46,66 +73,72 @@ const sqlField = StateField.define<MarkSQLPayload>({
 const sqlGutter = gutter({
   class: 'cm-sql-gutter',
   initialSpacer: () => sqlMarker,
-  lineMarker(view, line) {
-    let { from, to } = view.state.field(sqlField);
-    if (line.from >= from && line.from <= to) return sqlMarker;
-    return null;
-  },
-  lineMarkerChange: () => true,
+  markers: (view) => view.state.field(curSQLLineField),
+  // lineMarker(view, line) {
+  //   let { from, to } = view.state.field(sqlField);
+  //   if (line.from >= from && line.from <= to) return sqlMarker;
+  //   return null;
+  // },
+  // lineMarkerChange: () => true,
 });
 
+let timer: number | undefined;
 const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
-  if (!v.selectionSet) return;
-  let { state } = v.view,
-    sel = state.selection.main;
+  timer && clearTimeout(timer);
 
-  // console.log({ nodeSelFrom: sel.from, nodeSelTo: sel.to });
+  timer = setTimeout(() => {
+    if (!v.selectionSet) return;
+    let { state } = v.view,
+      sel = state.selection.main;
 
-  // step 0
-  // debounce
+    // console.log({ nodeSelFrom: sel.from, nodeSelTo: sel.to });
 
-  // step 1
-  // extend the selection, make the from start the line from, and to end the line to
-  const newFrom = state.doc.lineAt(sel.from).from;
-  const newTo = state.doc.lineAt(sel.to).to;
-  // console.log({ newFrom, newTo });
+    // step 0
+    // debounce
 
-  const effectPayload: MarkSQLPayload = { from: -1, to: -1, SQLs: [] };
+    // step 1
+    // extend the selection, make the from start the line from, and to end the line to
+    const newFrom = state.doc.lineAt(sel.from).from;
+    const newTo = state.doc.lineAt(sel.to).to;
+    // console.log({ newFrom, newTo });
 
-  syntaxTree(state)
-    .cursor()
-    .iterate((node) => {
-      // console.log({
-      //   nodeName: node.name,
-      //   nodeFrom: node.from,
-      //   nodeTo: node.to,
-      //   content: state.sliceDoc(node.from, node.to),
-      // });
-      if (node.name === 'Script') {
-        // root node
-        return true;
-      }
-      if (node.name === 'Statement') {
-        if (node.to >= newFrom && node.from <= newTo) {
-          const content = state.sliceDoc(node.from, node.to);
-          // console.log('found it: ', content);
-          if (content !== ';') {
-            effectPayload.SQLs.push(content);
-            if (effectPayload.from === -1) {
-              effectPayload.from = node.from;
-            }
-            if (node.to > effectPayload.to) {
-              effectPayload.to = node.to;
+    const effectPayload: MarkSQLPayload = { from: -1, to: -1, SQLs: [] };
+
+    syntaxTree(state)
+      .cursor()
+      .iterate((node) => {
+        // console.log({
+        //   nodeName: node.name,
+        //   nodeFrom: node.from,
+        //   nodeTo: node.to,
+        //   content: state.sliceDoc(node.from, node.to),
+        // });
+        if (node.name === 'Script') {
+          // root node
+          return true;
+        }
+        if (node.name === 'Statement') {
+          if (node.to >= newFrom && node.from <= newTo) {
+            const content = state.sliceDoc(node.from, node.to);
+            // console.log('found it: ', content);
+            if (content !== ';') {
+              effectPayload.SQLs.push(content);
+              if (effectPayload.from === -1) {
+                effectPayload.from = node.from;
+              }
+              if (node.to > effectPayload.to) {
+                effectPayload.to = node.to;
+              }
             }
           }
         }
-      }
-      return false;
-    });
+        return false;
+      });
 
-  // console.log({ effectPayload });
-  console.log('curSQL:', '\n' + effectPayload.SQLs.join('\n'));
-  v.view.dispatch({ effects: markSQL.of(effectPayload) });
+    // console.log({ effectPayload });
+    console.log('curSQL:', '\n' + effectPayload.SQLs.join('\n'));
+    v.view.dispatch({ effects: markSQL.of(effectPayload) });
+  }, 200);
 });
 
 const curSQLView = ViewPlugin.fromClass(
@@ -143,10 +176,11 @@ const curSQLView = ViewPlugin.fromClass(
 export const curSQLGutter = [
   sqlGutter,
   sqlField,
+  curSQLLineField,
   sqlHighlighter,
   EditorView.baseTheme({
     '.cm-sql-gutter .cm-gutterElement': {
-      width: '4px',
+      width: '2px',
     },
   }),
   // curSQLView,

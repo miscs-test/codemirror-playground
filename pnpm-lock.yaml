@@ -35,6 +35,9 @@ dependencies:
   '@lezer/highlight':
     specifier: ^1.1.6
     version: 1.1.6
+  '@types/lodash':
+    specifier: ^4.14.202
+    version: 4.14.202
   '@uiw/codemirror-theme-okaidia':
     specifier: ^4.21.20
     version: 4.21.20(@codemirror/language@6.9.2)(@codemirror/state@6.3.1)(@codemirror/view@6.21.4)
@@ -47,6 +50,12 @@ dependencies:
   codemirror:
     specifier: ^6.0.1
     version: 6.0.1(@lezer/common@1.1.0)
+  lodash:
+    specifier: ^4.17.21
+    version: 4.17.21
+  lodash-es:
+    specifier: ^4.17.21
+    version: 4.17.21
   react:
     specifier: ^17.0.2
     version: 17.0.2
@@ -591,6 +600,10 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /@types/lodash@4.14.202:
+    resolution: {integrity: sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==}
+    dev: false
+
   /@types/prop-types@15.7.4:
     resolution: {integrity: sha512-rZ5drC/jWjrArrS8BR6SIr4cWpW09RNTYt9AMZo3Jwwif+iacXAqgVjm0B0Bv/S1jhDXKHqRVNCbACkJ89RAnQ==}
     dev: true
@@ -1067,6 +1080,10 @@ packages:
     dependencies:
       minimist: 1.2.5
     dev: true
+
+  /lodash-es@4.17.21:
+    resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
+    dev: false
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
