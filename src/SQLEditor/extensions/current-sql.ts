@@ -84,10 +84,12 @@ const sqlGutter = gutter({
 
 let timer: number | undefined;
 const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
-  timer && clearTimeout(timer);
+  // console.log('sqlHighlighter1')
+  if (!v.selectionSet) return;
+  // console.log('sqlHighlighter2')
 
+  timer && clearTimeout(timer);
   timer = setTimeout(() => {
-    if (!v.selectionSet) return;
     let { state } = v.view,
       sel = state.selection.main;
 
@@ -136,7 +138,7 @@ const sqlHighlighter = EditorView.updateListener.of((v: ViewUpdate) => {
       });
 
     // console.log({ effectPayload });
-    console.log('curSQL:', '\n' + effectPayload.SQLs.join('\n'));
+    console.log('------curSQL:', '\n' + effectPayload.SQLs.join('\n'));
     v.view.dispatch({ effects: markSQL.of(effectPayload) });
   }, 200);
 });
