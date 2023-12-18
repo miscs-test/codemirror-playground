@@ -20,6 +20,7 @@ import { myTheme } from './extensions/theme';
 import { curSQLGutter } from './extensions/current-sql';
 import { breakpointGutter } from './extensions/breakpoints';
 import { breakpointGutter2 } from './extensions/highlight-cur-sql';
+import { inlineSuggestion } from './extensions/inline-suggestion';
 
 // const DOC = Array(20).fill('select * from test;').join('\n');
 // const SQL_DOC = `
@@ -69,26 +70,32 @@ const SQLEditor: React.FC = () => {
         // jsExts,
 
         // zebraStripes({ step: 4 }),
-        EditorView.lineWrapping,
-        toggleWith(
-          'Mod-o',
-          EditorView.editorAttributes.of({
-            style: 'background: yellow',
-          })
-        ),
+        // EditorView.lineWrapping,
+        // toggleWith(
+        //   'Mod-o',
+        //   EditorView.editorAttributes.of({
+        //     style: 'background: yellow',
+        //   })
+        // ),
         // Mod-o is cmd+o
-        underlineKeymap,
-        checkboxPlugin,
-        placeholders,
-        fullWidthLinter,
+        // underlineKeymap,
+        // checkboxPlugin,
+        // placeholders,
+        // fullWidthLinter,
 
         // emptyLineGutter,
-        helpPanel(),
+        // helpPanel(),
         // docSizePlugin,
         // myTheme,
-        curSQLGutter,
+        // curSQLGutter,
         // breakpointGutter,
         // breakpointGutter2,
+        inlineSuggestion({
+          delay: 500,
+          fetchFn: async (state) => {
+            return `hello\njavascript\nworld`;
+          },
+        }),
       ],
     });
 
