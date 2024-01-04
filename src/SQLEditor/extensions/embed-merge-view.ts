@@ -1,9 +1,17 @@
 // the original code is copied from https://github.com/codemirror/view/blob/main/src/placeholder.ts
-import { Extension } from '@codemirror/state';
-import { Rect, ViewPlugin } from '@codemirror/view';
+import { MergeView } from '@codemirror/merge';
+import { EditorState, Extension } from '@codemirror/state';
+import { Rect, ViewPlugin, lineNumbers } from '@codemirror/view';
 import { Decoration, DecorationSet, WidgetType } from '@codemirror/view';
 import { EditorView } from '@codemirror/view';
+import { basicSetup } from 'codemirror';
 // import { clientRectsFor, flattenRect } from '@codemirror/view';
+
+let doc = `one
+two
+three
+four
+five`;
 
 class Placeholder extends WidgetType {
   constructor(readonly content: string) {
@@ -12,32 +20,38 @@ class Placeholder extends WidgetType {
 
   toDOM() {
     let wrap = document.createElement('div');
-    // replace by a css class
-    wrap.style.border = '1px solid #ddd';
-    wrap.style.borderRadius = '4px'
-    wrap.style.boxShadow = '0 0 5px #ddd'
-    wrap.style.padding = '8px'
-    // wrap.style.display = 'block';
-    wrap.style.width = '400px';
-    // wrap.className = 'cm-placeholder';
-    // wrap.style.pointerEvents = 'none';
 
-    let input = document.createElement('input')
-    input.style.width = '80%'
-    wrap.appendChild(input)
-    // input.onclick = (e) => {
-    //   input.focus()
-    // }
-    let span = document.createElement('div');
-    span.appendChild(document.createTextNode(this.content))
-    wrap.appendChild(span)
-
-    let button = document.createElement('button')
-    button.innerText = 'click'
-    button.onclick = function() {
-      console.log(input.value)
-    }
-    wrap.appendChild(button)
+    let view = new MergeView({
+      a: {
+        doc,
+        extensions: [
+          basicSetup,
+          lineNumbers({
+            formatNumber: (lineNo, state) => {
+              return String(lineNo+9);
+              // return lineNo + 1 + state.doc.lineAt(lineNo).from;
+            },
+          }),
+        ],
+      },
+      b: {
+        doc: doc.replace(/t/g, 'T') + '\nSix',
+        extensions: [
+          basicSetup,
+          EditorView.editable.of(false),
+          EditorState.readOnly.of(true),
+          lineNumbers({
+            formatNumber: (lineNo, state) => {
+              return String(lineNo+9);
+              // return lineNo + 1 + state.doc.lineAt(lineNo).from;
+            },
+          }),
+        ],
+      },
+      gutter: false,
+      // revertControls: 'b-to-a',
+      parent: wrap,
+    });
 
     // wrap.appendChild(
     //   typeof this.content == 'string'
