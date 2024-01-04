@@ -27,6 +27,7 @@ import { breakpointGutter } from './extensions/breakpoints';
 import { breakpointGutter2 } from './extensions/highlight-cur-sql';
 import { inlineSuggestion } from './extensions/inline-suggestion';
 import { acceptChunk, rejectChunk, unifiedMergeView } from '@codemirror/merge';
+import { customPlaceholder } from './extensions/custom-placeholder';
 
 // const DOC = Array(20).fill('select * from test;').join('\n');
 // const SQL_DOC = `
@@ -132,6 +133,7 @@ const SQLEditor: React.FC = () => {
         //   mergeControls: true
         // })
         unifiedMergeViewCompartment.of([]),
+        customPlaceholder('press cmd+i to start AI\nahahah \nhehe')
       ],
     });
 
@@ -180,10 +182,10 @@ const SQLEditor: React.FC = () => {
     if (!editor) return;
 
     const sel = editor.state.selection.main;
-    if (sel.empty) {
-      window.alert('no content is selected');
-      return;
-    }
+    // if (sel.empty) {
+    //   window.alert('no content is selected');
+    //   return;
+    // }
 
     const newContent = window.prompt('enter new content:');
     if (newContent === null) return;
