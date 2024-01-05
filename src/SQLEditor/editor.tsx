@@ -29,6 +29,7 @@ import { inlineSuggestion } from './extensions/inline-suggestion';
 import { acceptChunk, rejectChunk, unifiedMergeView } from '@codemirror/merge';
 // import { customPlaceholder } from './extensions/custom-placeholder';
 import { customPlaceholder } from './extensions/embed-merge-view';
+import { copilot } from './extensions/copilot';
 
 // const DOC = Array(20).fill('select * from test;').join('\n');
 // const SQL_DOC = `
@@ -61,6 +62,13 @@ select * from test.tt /* this is a line comment */
 
 select * from t.tt /* this is a line comment */
 limit 100;  /* this is another line comment */
+
+USE sp500insight;
+SELECT sector, industry, COUNT(*) AS companies
+FROM companies c
+WHERE c.stock_symbol IN (SELECT stock_symbol FROM index_compositions WHERE index_symbol = "SP500")
+GROUP BY sector, industry
+ORDER BY sector, companies DESC;
 
 `;
 
@@ -135,6 +143,7 @@ const SQLEditor: React.FC = () => {
         // })
         unifiedMergeViewCompartment.of([]),
         customPlaceholder('press cmd+i to start AI\nahahah \nhehe'),
+        copilot()
       ],
     });
 
@@ -202,8 +211,8 @@ const SQLEditor: React.FC = () => {
       effects: unifiedMergeViewCompartment.reconfigure(
         unifiedMergeView({
           original: oriDoc,
-          highlightChanges: false,
-          gutter: true,
+          highlightChanges: true,
+          gutter: false,
           syntaxHighlightDeletions: true,
           mergeControls: false,
         })
