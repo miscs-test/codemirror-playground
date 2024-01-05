@@ -44,16 +44,20 @@ const copilotTheme = EditorView.baseTheme({
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-  },
-  '.cm-copilot-root input': {
-    padding: '4px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    caretColor: 'blue',
+    '& input': {
+      padding: '4px',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      caretColor: 'blue',
+    },
   },
   '.cm-copilot-btns': {
     display: 'flex',
     gap: '8px',
+  },
+  // remove the default line-through text decoration
+  '.cm-deletedChunk del': {
+    textDecoration: 'none',
   },
 });
 
@@ -111,7 +115,10 @@ class CopilotWidget extends WidgetType {
     acceptBtn.onclick = () => {
       acceptChunk(this.view);
       this.view.dispatch({
-        effects: copilotPluginCompartment.reconfigure([]),
+        effects: [
+          unifiedMergeViewCompartment.reconfigure([]),
+          copilotPluginCompartment.reconfigure([]),
+        ],
       });
     };
     btnsContainer.appendChild(acceptBtn);
@@ -122,7 +129,10 @@ class CopilotWidget extends WidgetType {
     rejectBtn.onclick = () => {
       rejectChunk(this.view);
       this.view.dispatch({
-        effects: copilotPluginCompartment.reconfigure([]),
+        effects: [
+          unifiedMergeViewCompartment.reconfigure([]),
+          copilotPluginCompartment.reconfigure([]),
+        ],
       });
     };
     btnsContainer.appendChild(rejectBtn);
